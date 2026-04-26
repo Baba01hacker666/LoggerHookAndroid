@@ -61,6 +61,9 @@ This logger includes methods to help evade anti-tampering and runtime protection
 5. **Spoof Installer Source:**
    Replace `invoke-virtual {pm, pkg}, Landroid/content/pm/PackageManager;->getInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;` with:
    ```smali
+   # IMPORTANT: pass the original package-name register (`pkg`), not the PackageManager register (`pm`).
+   # If original args are {v2, v5} where v2=pm and v5=pkg, use v5 below:
+   invoke-static {v5}, Lcom/dct/hooklogger/Hook;->fakeGetInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;
    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->fakeGetInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;
    ```
 

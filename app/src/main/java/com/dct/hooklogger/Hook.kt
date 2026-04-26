@@ -109,6 +109,7 @@ object Hook {
         return "0"
     }
 
+    /** Replace PackageManager.getInstallerPackageName(packageName) checks with this (pass packageName register). */
     /** Replace PackageManager.getInstallerPackageName(packageName) checks with this. */
     @JvmStatic
     fun fakeGetInstallerPackageName(packageName: String?): String? {

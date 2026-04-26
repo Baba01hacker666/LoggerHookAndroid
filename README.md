@@ -66,10 +66,19 @@ This logger includes methods to help evade anti-tampering and runtime protection
 
 
 6. **Bypass Root / Magisk / SU checks:**
-   - Replace `Runtime.exec("su")` style calls with:
+   - For `Runtime.exec(Ljava/lang/String;)Ljava/lang/Process;`, sanitize **then** call `exec` (do not replace `exec` directly with this helper):
    ```smali
    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedRuntimeCommand(Ljava/lang/String;)Ljava/lang/String;
+   move-result-object v0
+   invoke-virtual {vRuntime, v0}, Ljava/lang/Runtime;->exec(Ljava/lang/String;)Ljava/lang/Process;
    ```
+   - For `Runtime.exec([Ljava/lang/String;)Ljava/lang/Process;`, sanitize argv first and keep argument semantics:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedRuntimeCommandArgs([Ljava/lang/String;)[Ljava/lang/String;
+   move-result-object v0
+   invoke-virtual {vRuntime, v0}, Ljava/lang/Runtime;->exec([Ljava/lang/String;)Ljava/lang/Process;
+   ```
+   `sanitizedRuntimeCommand*` only swaps suspicious executable tokens (e.g. `su`) while preserving the original argument tail/vector.
    - Replace file existence probes like `/system/bin/su` with:
    ```smali
    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->fakeFileExistsForRoot(Ljava/lang/String;)Z

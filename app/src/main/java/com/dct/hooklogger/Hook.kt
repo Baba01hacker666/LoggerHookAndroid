@@ -118,15 +118,51 @@ object Hook {
     }
 
 
-    /** Replace Runtime.exec("su")/shell root probes with this method. */
+    /**
+     * Use before Runtime.exec(...): sanitize command token while preserving argument tail.
+     * Example flow: cmd = sanitizedRuntimeCommand(cmd); runtime.exec(cmd)
+     */
     @JvmStatic
     fun sanitizedRuntimeCommand(command: String?): String {
         val input = command?.trim().orEmpty()
-        val lowered = input.lowercase(Locale.US)
-        val suspicious = lowered == "su" || lowered.startsWith("su ") || lowered.contains("/su") || lowered.contains("magisk")
-        val sanitized = if (suspicious) "sh" else input
-        write("ROOT_BYPASS", "sanitizedRuntimeCommand input='${input.ifEmpty { "<empty>" }}' output='$sanitized'")
+        if (input.isEmpty()) {
+            write("ROOT_BYPASS", "sanitizedRuntimeCommand input='<empty>' output='' ")
+            return input
+        }
+
+        val parts = input.split("\\s+".toRegex(), limit = 2)
+        val exe = parts[0]
+        val tail = if (parts.size > 1) parts[1] else ""
+
+        val loweredExe = exe.lowercase(Locale.US)
+        val suspiciousExe = loweredExe == "su" || loweredExe.endsWith("/su") || loweredExe.contains("magisk")
+
+        val safeExe = if (suspiciousExe) "sh" else exe
+        val sanitized = if (tail.isNotEmpty()) "$safeExe $tail" else safeExe
+
+        write("ROOT_BYPASS", "sanitizedRuntimeCommand input='$input' output='$sanitized'")
         return sanitized
+    }
+
+    /** Use before Runtime.exec(String[]): sanitize argv[0] only and keep the argument vector intact. */
+    @JvmStatic
+    fun sanitizedRuntimeCommandArgs(command: Array<String>?): Array<String> {
+        if (command == null || command.isEmpty()) {
+            write("ROOT_BYPASS", "sanitizedRuntimeCommandArgs input=<null_or_empty>")
+            return command ?: emptyArray()
+        }
+
+        val copied = command.copyOf()
+        val exe = copied[0]
+        val loweredExe = exe.lowercase(Locale.US)
+        val suspiciousExe = loweredExe == "su" || loweredExe.endsWith("/su") || loweredExe.contains("magisk")
+        if (suspiciousExe) {
+            copied[0] = "sh"
+            write("ROOT_BYPASS", "sanitizedRuntimeCommandArgs replaced argv0='$exe' -> 'sh'")
+        } else {
+            write("ROOT_BYPASS", "sanitizedRuntimeCommandArgs passthrough argv0='$exe'")
+        }
+        return copied
     }
 
     /** Replace su-path file checks with this method to force non-existence. */

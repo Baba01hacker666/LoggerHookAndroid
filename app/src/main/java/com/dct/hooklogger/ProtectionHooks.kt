@@ -5,6 +5,9 @@ import android.os.Build
 import android.provider.Settings
 
 internal object ProtectionHooks {
+    private const val DEVICE_INTEGRITY = "MEETS_DEVICE_INTEGRITY"
+    private const val STRONG_INTEGRITY = "MEETS_STRONG_INTEGRITY"
+
     fun init(context: Context?) {
         if (context == null) return
         HookRuntime.appContext = context.applicationContext ?: context
@@ -88,5 +91,23 @@ internal object ProtectionHooks {
         val installer = "com.android.vending"
         HookRuntime.write("ENV", "fakeGetInstallerPackageName called for ${packageName ?: "null"}, returning $installer")
         return installer
+    }
+
+    fun spoofIntegrityVerdict(originalVerdict: String?): String {
+        val spoofed = "$STRONG_INTEGRITY,$DEVICE_INTEGRITY"
+        HookRuntime.write(
+            "INTEGRITY",
+            "spoofIntegrityVerdict called with ${originalVerdict ?: "null"}, returning $spoofed"
+        )
+        return spoofed
+    }
+
+    fun spoofIntegrityVerdictList(originalVerdicts: Array<String>?): Array<String> {
+        val spoofed = arrayOf(STRONG_INTEGRITY, DEVICE_INTEGRITY)
+        HookRuntime.write(
+            "INTEGRITY",
+            "spoofIntegrityVerdictList called with ${originalVerdicts?.contentToString() ?: "null"}, returning ${spoofed.contentToString()}"
+        )
+        return spoofed
     }
 }

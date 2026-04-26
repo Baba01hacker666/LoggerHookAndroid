@@ -77,8 +77,20 @@ This logger includes methods to help evade anti-tampering and runtime protection
    invoke-static {v5}, Lcom/dct/hooklogger/Hook;->fakeGetInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;
    ```
 
+6. **Spoof Play Integrity verdict labels:**
+   When app logic consumes decoded verdict strings/arrays, replace that usage with:
+   ```smali
+   # String verdict (for example from decoded JSON)
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->spoofIntegrityVerdict(Ljava/lang/String;)Ljava/lang/String;
 
-6. **Bypass Root / Magisk / SU checks:**
+   # String[] verdict list
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->spoofIntegrityVerdictList([Ljava/lang/String;)[Ljava/lang/String;
+   ```
+   Both helpers force:
+   - `MEETS_STRONG_INTEGRITY`
+   - `MEETS_DEVICE_INTEGRITY`
+
+7. **Bypass Root / Magisk / SU checks:**
    - For `Runtime.exec(Ljava/lang/String;)Ljava/lang/Process;`, sanitize **then** call `exec` (do not replace `exec` directly with this helper):
    ```smali
    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedRuntimeCommand(Ljava/lang/String;)Ljava/lang/String;
@@ -109,7 +121,7 @@ This logger includes methods to help evade anti-tampering and runtime protection
    invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeRootBeerCheck(Ljava/lang/String;Z)Z
    ```
 
-7. **Bypass Emulator / Virtual Device checks:**
+8. **Bypass Emulator / Virtual Device checks:**
    - Generic boolean emulator probes:
    ```smali
    invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeEmulatorCheck(Ljava/lang/String;Z)Z

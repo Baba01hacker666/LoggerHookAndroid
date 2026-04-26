@@ -52,6 +52,14 @@ object Hook {
         ProtectionHooks.fakeGetInstallerPackageName(packageName)
 
     @JvmStatic
+    fun spoofIntegrityVerdict(originalVerdict: String?): String =
+        ProtectionHooks.spoofIntegrityVerdict(originalVerdict)
+
+    @JvmStatic
+    fun spoofIntegrityVerdictList(originalVerdicts: Array<String>?): Array<String> =
+        ProtectionHooks.spoofIntegrityVerdictList(originalVerdicts)
+
+    @JvmStatic
     fun sanitizedRuntimeCommand(command: String?): String = RootBypassHooks.sanitizedRuntimeCommand(command)
 
     @JvmStatic

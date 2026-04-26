@@ -64,6 +64,29 @@ This logger includes methods to help evade anti-tampering and runtime protection
    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->fakeGetInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;
    ```
 
+
+6. **Bypass Root / Magisk / SU checks:**
+   - Replace `Runtime.exec("su")` style calls with:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedRuntimeCommand(Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Replace file existence probes like `/system/bin/su` with:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->fakeFileExistsForRoot(Ljava/lang/String;)Z
+   ```
+   - Replace `/proc/mounts` string checks with:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedProcMounts(Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Replace `SystemProperties.get(...)` result handling with:
+   ```smali
+   invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizedSystemProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Replace RootBeer/native detector boolean returns with:
+   ```smali
+   invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeRootBeerCheck(Ljava/lang/String;Z)Z
+   ```
+
 ## Log location
 
 Default log path after `Hook.init(context)`:

@@ -117,6 +117,93 @@ object Hook {
         return installer
     }
 
+
+    /** Replace Runtime.exec("su")/shell root probes with this method. */
+    @JvmStatic
+    fun sanitizedRuntimeCommand(command: String?): String {
+        val input = command?.trim().orEmpty()
+        val lowered = input.lowercase(Locale.US)
+        val suspicious = lowered == "su" || lowered.startsWith("su ") || lowered.contains("/su") || lowered.contains("magisk")
+        val sanitized = if (suspicious) "sh" else input
+        write("ROOT_BYPASS", "sanitizedRuntimeCommand input='${input.ifEmpty { "<empty>" }}' output='$sanitized'")
+        return sanitized
+    }
+
+    /** Replace su-path file checks with this method to force non-existence. */
+    @JvmStatic
+    fun fakeFileExistsForRoot(path: String?): Boolean {
+        val p = path?.trim().orEmpty()
+        val lowered = p.lowercase(Locale.US)
+        val rootArtifacts = listOf(
+            "/system/bin/su",
+            "/system/xbin/su",
+            "/sbin/su",
+            "/su/bin/su",
+            "/system/app/superuser.apk",
+            "/system/etc/init/magisk",
+            "/proc/mounts",
+            "magisk"
+        )
+        val forceFalse = rootArtifacts.any { lowered.contains(it) }
+        if (forceFalse) {
+            write("ROOT_BYPASS", "fakeFileExistsForRoot intercepted path='$p', returning false")
+            return false
+        }
+        val exists = try {
+            File(p).exists()
+        } catch (_: Throwable) {
+            false
+        }
+        write("ROOT_BYPASS", "fakeFileExistsForRoot path='$p', passthrough=$exists")
+        return exists
+    }
+
+    /** Replace reads of /proc/mounts with this to remove Magisk-like artifacts from content. */
+    @JvmStatic
+    fun sanitizedProcMounts(content: String?): String {
+        if (content == null) {
+            write("ROOT_BYPASS", "sanitizedProcMounts called with null")
+            return ""
+        }
+        val filtered = content
+            .lineSequence()
+            .filterNot { line ->
+                val l = line.lowercase(Locale.US)
+                l.contains("magisk") || l.contains("overlay") && l.contains("/system")
+            }
+            .joinToString("\n")
+        write("ROOT_BYPASS", "sanitizedProcMounts filtered=${content.length - filtered.length} chars")
+        return filtered
+    }
+
+    /** Replace SystemProperties.get(key) root probes with this method. */
+    @JvmStatic
+    fun sanitizedSystemProperty(key: String?, originalValue: String?): String {
+        val k = key?.trim().orEmpty()
+        val fake = when (k) {
+            "ro.build.tags" -> "release-keys"
+            "ro.secure" -> "1"
+            "ro.debuggable" -> "0"
+            "service.adb.root" -> "0"
+            "ro.boot.verifiedbootstate" -> "green"
+            else -> null
+        }
+        val out = fake ?: (originalValue ?: "")
+        write("ROOT_BYPASS", "sanitizedSystemProperty key='$k' returning '$out'")
+        return out
+    }
+
+    /** Replace native/rootbeer boolean results with this to force a clean device state. */
+    @JvmStatic
+    fun sanitizeRootBeerCheck(checkName: String?, detected: Boolean): Boolean {
+        if (detected) {
+            write("ROOT_BYPASS", "sanitizeRootBeerCheck '${checkName ?: "unknown"}' intercepted true -> false")
+        } else {
+            write("ROOT_BYPASS", "sanitizeRootBeerCheck '${checkName ?: "unknown"}' passthrough false")
+        }
+        return false
+    }
+
     /** Universal one-argument logger. */
     @JvmStatic
     fun log(message: String?) {

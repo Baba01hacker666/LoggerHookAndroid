@@ -1,12 +1,12 @@
 # LoggerHookAndroid
-Hook into any app to log its working 
+Hook into any app and log its behavior.
 
 Minimal Kotlin Android hook-runtime APK source.
 
 ## Build
 
 ```bash
-./gradlew assembleDebug
+./BUILD_WITH_SYSTEM_GRADLE.sh
 ```
 
 APK output:
@@ -64,7 +64,6 @@ This logger includes methods to help evade anti-tampering and runtime protection
    # IMPORTANT: pass the original package-name register (`pkg`), not the PackageManager register (`pm`).
    # If original args are {v2, v5} where v2=pm and v5=pkg, use v5 below:
    invoke-static {v5}, Lcom/dct/hooklogger/Hook;->fakeGetInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;
-   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->fakeGetInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;
    ```
 
 

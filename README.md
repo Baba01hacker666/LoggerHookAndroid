@@ -57,6 +57,17 @@ This logger includes methods to help evade anti-tampering and runtime protection
    ```smali
    invoke-static {}, Lcom/dct/hooklogger/Hook;->fakeIsDebuggerConnected()Z
    ```
+   Extended checks often also query Developer Options and USB debugging state via `Settings.Global`. You can bypass those probes too:
+   ```smali
+   # Replace getInt(..., "development_settings_enabled", ...)
+   invoke-static {}, Lcom/dct/hooklogger/Hook;->fakeDevelopmentSettingsEnabled()I
+
+   # Replace getInt(..., "adb_enabled", ...)
+   invoke-static {}, Lcom/dct/hooklogger/Hook;->fakeAdbEnabled()I
+
+   # Generic helper when original key/value is available:
+   invoke-static {vKey, vOriginal}, Lcom/dct/hooklogger/Hook;->sanitizedGlobalSetting(Ljava/lang/String;I)I
+   ```
 
 5. **Spoof Installer Source:**
    Replace `invoke-virtual {pm, pkg}, Landroid/content/pm/PackageManager;->getInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;` with:

@@ -64,6 +64,59 @@ This logger includes methods to help evade anti-tampering and runtime protection
    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->fakeGetInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;
    ```
 
+
+6. **Bypass Root / Magisk / SU checks:**
+   - For `Runtime.exec(Ljava/lang/String;)Ljava/lang/Process;`, sanitize **then** call `exec` (do not replace `exec` directly with this helper):
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedRuntimeCommand(Ljava/lang/String;)Ljava/lang/String;
+   move-result-object v0
+   invoke-virtual {vRuntime, v0}, Ljava/lang/Runtime;->exec(Ljava/lang/String;)Ljava/lang/Process;
+   ```
+   - For `Runtime.exec([Ljava/lang/String;)Ljava/lang/Process;`, sanitize argv first and keep argument semantics:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedRuntimeCommandArgs([Ljava/lang/String;)[Ljava/lang/String;
+   move-result-object v0
+   invoke-virtual {vRuntime, v0}, Ljava/lang/Runtime;->exec([Ljava/lang/String;)Ljava/lang/Process;
+   ```
+   `sanitizedRuntimeCommand*` only swaps suspicious executable tokens (e.g. `su`) while preserving the original argument tail/vector.
+   - Replace file existence probes like `/system/bin/su` with:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->fakeFileExistsForRoot(Ljava/lang/String;)Z
+   ```
+   - Replace `/proc/mounts` string checks with:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedProcMounts(Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Replace `SystemProperties.get(...)` result handling with:
+   ```smali
+   invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizedSystemProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Replace RootBeer/native detector boolean returns with:
+   ```smali
+   invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeRootBeerCheck(Ljava/lang/String;Z)Z
+   ```
+
+7. **Bypass Emulator / Virtual Device checks:**
+   - Generic boolean emulator probes:
+   ```smali
+   invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeEmulatorCheck(Ljava/lang/String;Z)Z
+   ```
+   - Build/prop-based probes (`ro.hardware`, `ro.kernel.qemu`, `Build.FINGERPRINT`):
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedHardware(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedKernelQemu(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedFingerprint(Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Telephony null/empty IMEI probes:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedImei(Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Sensor count and battery-level heuristics:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedSensorCount(I)I
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedBatteryLevel(I)I
+   ```
+
 ## Log location
 
 Default log path after `Hook.init(context)`:

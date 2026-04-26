@@ -116,25 +116,33 @@ internal object ProtectionHooks {
             HookRuntime.write("INTEGRITY", "sha256ClassesDexFromApk missing APK: $apkPath")
             return ""
         }
-        val digest = MessageDigest.getInstance("SHA-256")
-        ZipFile(apk).use { zip ->
-            val entry = zip.getEntry("classes.dex")
-            if (entry == null) {
-                HookRuntime.write("INTEGRITY", "sha256ClassesDexFromApk classes.dex not found in $apkPath")
-                return ""
-            }
-            zip.getInputStream(entry).use { stream: InputStream ->
-                val buf = ByteArray(8192)
-                while (true) {
-                    val read = stream.read(buf)
-                    if (read <= 0) break
-                    digest.update(buf, 0, read)
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            ZipFile(apk).use { zip ->
+                val entry = zip.getEntry("classes.dex")
+                if (entry == null) {
+                    HookRuntime.write("INTEGRITY", "sha256ClassesDexFromApk classes.dex not found in $apkPath")
+                    return ""
+                }
+                zip.getInputStream(entry).use { stream: InputStream ->
+                    val buf = ByteArray(8192)
+                    while (true) {
+                        val read = stream.read(buf)
+                        if (read <= 0) break
+                        digest.update(buf, 0, read)
+                    }
                 }
             }
+            val hex = digest.digest().joinToString("") { "%02x".format(Locale.US, it) }
+            HookRuntime.write("INTEGRITY", "sha256ClassesDexFromApk computed classes.dex SHA-256 for $apkPath")
+            hex
+        } catch (e: Exception) {
+            HookRuntime.write(
+                "INTEGRITY",
+                "sha256ClassesDexFromApk failed for $apkPath: ${e.javaClass.simpleName}: ${e.message}"
+            )
+            ""
         }
-        val hex = digest.digest().joinToString("") { "%02x".format(Locale.US, it) }
-        HookRuntime.write("INTEGRITY", "sha256ClassesDexFromApk computed classes.dex SHA-256 for $apkPath")
-        return hex
     }
 
     fun verifySha256(expectedSha256: String?, actualSha256: String?): Boolean {

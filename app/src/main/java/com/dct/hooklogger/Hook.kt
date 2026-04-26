@@ -1,6 +1,7 @@
 package com.dct.hooklogger
 
 import android.content.Context
+import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import java.io.File
@@ -24,6 +25,9 @@ object Hook {
     @Volatile
     private var appContext: Context? = null
 
+    @Volatile
+    private var useLogcat = true
+
     private val io = Executors.newSingleThreadExecutor()
     private val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
 
@@ -32,6 +36,37 @@ object Hook {
     fun init(context: Context?) {
         if (context == null) return
         appContext = context.applicationContext ?: context
+    }
+
+    /** Disable Logcat output to avoid detection by runtime protections. */
+    @JvmStatic
+    fun disableLogcat() {
+        useLogcat = false
+        write("PROTECTION", "Logcat output disabled")
+    }
+
+    /** Suppress uncaught exceptions to prevent app from purposely crashing. */
+    @JvmStatic
+    fun suppressCrashes() {
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            write("CRASH_SUPPRESSED", "Thread: ${t.name}, Exception: ${e.javaClass.name}: ${e.message}")
+            // Do not call defaultHandler to prevent crash
+        }
+        write("PROTECTION", "Crash suppression enabled")
+    }
+
+    /** Replace System.exit() calls with this to prevent app from killing itself. */
+    @JvmStatic
+    fun dummyExit(status: Int) {
+        write("DUMMY_EXIT", "System.exit($status) called and intercepted.")
+    }
+
+    /** Replace android.os.Debug.isDebuggerConnected() calls with this. */
+    @JvmStatic
+    fun fakeIsDebuggerConnected(): Boolean {
+        write("DEBUGGER", "fakeIsDebuggerConnected called, returning false")
+        return false
     }
 
     /** Universal one-argument logger. */
@@ -67,6 +102,77 @@ object Hook {
         write("STACK", sb.toString())
     }
 
+    /** Hex dump logger. */
+    @JvmStatic
+    fun hex(label: String?, bytes: ByteArray?) {
+        if (bytes == null) {
+            write("HEX", "${label ?: "hex"}: null")
+            return
+        }
+        val sb = StringBuilder()
+        sb.append(label ?: "hex").append(" (").append(bytes.size).append(" bytes):\n")
+        val hexChars = "0123456789ABCDEF".toCharArray()
+        for (i in bytes.indices) {
+            val v = bytes[i].toInt() and 0xFF
+            sb.append(hexChars[v ushr 4]).append(hexChars[v and 0x0F]).append(" ")
+            if ((i + 1) % 16 == 0) sb.append("\n")
+        }
+        write("HEX", sb.toString())
+    }
+
+    /** Reflection-based object dump. */
+    @JvmStatic
+    fun dumpObj(label: String?, obj: Any?) {
+        if (obj == null) {
+            write("DUMP", "${label ?: "obj"}: null")
+            return
+        }
+        val sb = StringBuilder()
+        sb.append(label ?: "obj").append(" (").append(obj.javaClass.name).append("):\n")
+        try {
+            var clazz: Class<*>? = obj.javaClass
+            while (clazz != null && clazz != Any::class.java) {
+                val fields = clazz.declaredFields
+                for (field in fields) {
+                    field.isAccessible = true
+                    val value = field.get(obj)
+                    sb.append("  ").append(field.name).append(" = ").append(safeString(value)).append("\n")
+                }
+                clazz = clazz.superclass
+            }
+        } catch (t: Throwable) {
+            sb.append("  <dump failed: ${t.javaClass.name}: ${t.message}>\n")
+        }
+        write("DUMP", sb.toString())
+    }
+
+    /** Log Android Bundle contents. */
+    @JvmStatic
+    fun bundle(label: String?, bundle: Bundle?) {
+        if (bundle == null) {
+            write("BUNDLE", "${label ?: "bundle"}: null")
+            return
+        }
+        val sb = StringBuilder()
+        sb.append(label ?: "bundle").append(":\n")
+        try {
+            for (key in bundle.keySet()) {
+                val value = bundle.get(key)
+                sb.append("  ").append(key).append(" = ").append(safeString(value)).append("\n")
+            }
+        } catch (t: Throwable) {
+            sb.append("  <bundle parse failed: ${t.javaClass.name}: ${t.message}>\n")
+        }
+        write("BUNDLE", sb.toString())
+    }
+
+    /** Log current executing thread name and ID. */
+    @JvmStatic
+    fun thread() {
+        val t = Thread.currentThread()
+        write("THREAD", "id=${t.id}, name=${t.name}")
+    }
+
     /** Returns the preferred log file path for quick debugging. */
     @JvmStatic
     fun logPath(): String {
@@ -84,7 +190,9 @@ object Hook {
     private fun write(tag: String, message: String) {
         safe {
             val line = "${time.format(Date())} [$tag] $message"
-            Log.d(TAG, line)
+            if (useLogcat) {
+                Log.d(TAG, line)
+            }
             io.execute {
                 safe {
                     val file = getLogFile() ?: return@safe
@@ -111,8 +219,20 @@ object Hook {
     }
 
     private fun safeString(value: Any?): String {
+        if (value == null) return "null"
         return try {
-            value?.toString() ?: "null"
+            when (value) {
+                is ByteArray -> value.contentToString()
+                is ShortArray -> value.contentToString()
+                is IntArray -> value.contentToString()
+                is LongArray -> value.contentToString()
+                is FloatArray -> value.contentToString()
+                is DoubleArray -> value.contentToString()
+                is BooleanArray -> value.contentToString()
+                is CharArray -> value.contentToString()
+                is Array<*> -> value.contentDeepToString()
+                else -> value.toString()
+            }
         } catch (t: Throwable) {
             "<toString failed: ${t.javaClass.name}: ${t.message}>"
         }
@@ -122,7 +242,9 @@ object Hook {
         try {
             block()
         } catch (ignored: Throwable) {
-            Log.e(TAG, "suppressed: ${ignored.javaClass.name}: ${ignored.message}")
+            if (useLogcat) {
+                Log.e(TAG, "suppressed: ${ignored.javaClass.name}: ${ignored.message}")
+            }
         }
     }
 }

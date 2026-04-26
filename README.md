@@ -87,6 +87,27 @@ This logger includes methods to help evade anti-tampering and runtime protection
    invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeRootBeerCheck(Ljava/lang/String;Z)Z
    ```
 
+7. **Bypass Emulator / Virtual Device checks:**
+   - Generic boolean emulator probes:
+   ```smali
+   invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeEmulatorCheck(Ljava/lang/String;Z)Z
+   ```
+   - Build/prop-based probes (`ro.hardware`, `ro.kernel.qemu`, `Build.FINGERPRINT`):
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedHardware(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedKernelQemu(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedFingerprint(Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Telephony null/empty IMEI probes:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedImei(Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Sensor count and battery-level heuristics:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedSensorCount(I)I
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedBatteryLevel(I)I
+   ```
+
 ## Log location
 
 Default log path after `Hook.init(context)`:

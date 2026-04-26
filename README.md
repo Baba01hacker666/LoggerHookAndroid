@@ -66,8 +66,26 @@ This logger includes methods to help evade anti-tampering and runtime protection
    invoke-static {v5}, Lcom/dct/hooklogger/Hook;->fakeGetInstallerPackageName(Ljava/lang/String;)Ljava/lang/String;
    ```
 
+6. **App Tamper / Code Integrity / DEX Checksum checks:**
+   - Compute SHA-256 for `classes.dex` inside an APK:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sha256ClassesDexFromApk(Ljava/lang/String;)Ljava/lang/String;
+   ```
+   - Compare expected/actual hash:
+   ```smali
+   invoke-static {v1, v2}, Lcom/dct/hooklogger/Hook;->verifySha256(Ljava/lang/String;Ljava/lang/String;)Z
+   ```
+   - Read legacy `PackageManager.getPackageInfo(...).signatures` values as strings:
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->packageSignatures(Ljava/lang/String;)[Ljava/lang/String;
+   ```
+   - Verify app signature by SHA-256:
+   ```smali
+   invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->verifyPackageSignatureSha256(Ljava/lang/String;Ljava/lang/String;)Z
+   ```
 
-6. **Bypass Root / Magisk / SU checks:**
+
+7. **Bypass Root / Magisk / SU checks:**
    - For `Runtime.exec(Ljava/lang/String;)Ljava/lang/Process;`, sanitize **then** call `exec` (do not replace `exec` directly with this helper):
    ```smali
    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedRuntimeCommand(Ljava/lang/String;)Ljava/lang/String;
@@ -98,7 +116,7 @@ This logger includes methods to help evade anti-tampering and runtime protection
    invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeRootBeerCheck(Ljava/lang/String;Z)Z
    ```
 
-7. **Bypass Emulator / Virtual Device checks:**
+8. **Bypass Emulator / Virtual Device checks:**
    - Generic boolean emulator probes:
    ```smali
    invoke-static {v0, v1}, Lcom/dct/hooklogger/Hook;->sanitizeEmulatorCheck(Ljava/lang/String;Z)Z

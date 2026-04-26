@@ -42,6 +42,26 @@ object Hook {
         ProtectionHooks.fakeGetInstallerPackageName(packageName)
 
     @JvmStatic
+    fun sha256HexFromBytes(bytes: ByteArray?): String = ProtectionHooks.sha256HexFromBytes(bytes)
+
+    @JvmStatic
+    fun sha256HexFromFile(path: String?): String = ProtectionHooks.sha256HexFromFile(path)
+
+    @JvmStatic
+    fun sha256ClassesDexFromApk(apkPath: String?): String = ProtectionHooks.sha256ClassesDexFromApk(apkPath)
+
+    @JvmStatic
+    fun verifySha256(expectedSha256: String?, actualSha256: String?): Boolean =
+        ProtectionHooks.verifySha256(expectedSha256, actualSha256)
+
+    @JvmStatic
+    fun packageSignatures(packageName: String?): Array<String> = ProtectionHooks.packageSignatures(packageName)
+
+    @JvmStatic
+    fun verifyPackageSignatureSha256(packageName: String?, expectedSha256: String?): Boolean =
+        ProtectionHooks.verifyPackageSignatureSha256(packageName, expectedSha256)
+
+    @JvmStatic
     fun sanitizedRuntimeCommand(command: String?): String = RootBypassHooks.sanitizedRuntimeCommand(command)
 
     @JvmStatic

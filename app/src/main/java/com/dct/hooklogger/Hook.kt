@@ -109,6 +109,14 @@ object Hook {
         return "0"
     }
 
+    /** Replace PackageManager.getInstallerPackageName(packageName) checks with this. */
+    @JvmStatic
+    fun fakeGetInstallerPackageName(packageName: String?): String? {
+        val installer = "com.android.vending"
+        write("ENV", "fakeGetInstallerPackageName called for ${packageName ?: "null"}, returning $installer")
+        return installer
+    }
+
     /** Universal one-argument logger. */
     @JvmStatic
     fun log(message: String?) {

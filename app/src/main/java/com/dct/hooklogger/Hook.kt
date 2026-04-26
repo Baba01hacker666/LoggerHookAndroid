@@ -30,7 +30,9 @@ object Hook {
     private var useLogcat = true
 
     private val io = Executors.newSingleThreadExecutor()
-    private val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+    private val timeFormatter = ThreadLocal.withInitial {
+        SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+    }
 
     /** Initialize once from Application, Activity, Service, Receiver, or any Context-bearing hook point. */
     @JvmStatic
@@ -49,10 +51,9 @@ object Hook {
     /** Suppress uncaught exceptions to prevent app from purposely crashing. */
     @JvmStatic
     fun suppressCrashes() {
-        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { t, e ->
             write("CRASH_SUPPRESSED", "Thread: ${t.name}, Exception: ${e.javaClass.name}: ${e.message}")
-            // Do not call defaultHandler to prevent crash
+            // Intentionally do not delegate to the previous default handler to prevent crash loops.
         }
         write("PROTECTION", "Crash suppression enabled")
     }
@@ -109,7 +110,6 @@ object Hook {
         return "0"
     }
 
-    /** Replace PackageManager.getInstallerPackageName(packageName) checks with this (pass packageName register). */
     /** Replace PackageManager.getInstallerPackageName(packageName) checks with this. */
     @JvmStatic
     fun fakeGetInstallerPackageName(packageName: String?): String? {
@@ -424,7 +424,7 @@ object Hook {
 
     private fun write(tag: String, message: String) {
         safe {
-            val line = "${time.format(Date())} [$tag] $message"
+            val line = "${timeFormatter.get().format(Date())} [$tag] $message"
             if (useLogcat) {
                 Log.d(TAG, line)
             }

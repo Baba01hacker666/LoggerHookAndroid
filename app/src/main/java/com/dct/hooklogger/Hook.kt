@@ -1,6 +1,7 @@
 package com.dct.hooklogger
 
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -67,6 +68,45 @@ object Hook {
     fun fakeIsDebuggerConnected(): Boolean {
         write("DEBUGGER", "fakeIsDebuggerConnected called, returning false")
         return false
+    }
+
+    /** Replace android.os.Debug.waitingForDebugger() calls with this. */
+    @JvmStatic
+    fun fakeWaitingForDebugger(): Boolean {
+        write("DEBUGGER", "fakeWaitingForDebugger called, returning false")
+        return false
+    }
+
+    /** Replace android.app.ActivityManager.isUserAMonkey() calls with this. */
+    @JvmStatic
+    fun fakeIsUserAMonkey(): Boolean {
+        write("ENV", "fakeIsUserAMonkey called, returning false")
+        return false
+    }
+
+    /** Replace Build.TAGS checks with this method (avoids 'test-keys' detections). */
+    @JvmStatic
+    fun sanitizedBuildTags(): String {
+        val original = Build.TAGS ?: "null"
+        val sanitized = original.replace("test-keys", "release-keys")
+        write("ENV", "sanitizedBuildTags called, returning $sanitized")
+        return sanitized
+    }
+
+    /** Replace Build.TYPE checks with this method (avoids 'eng' / 'userdebug' detections). */
+    @JvmStatic
+    fun sanitizedBuildType(): String {
+        val original = Build.TYPE ?: "null"
+        val sanitized = if (original == "eng" || original == "userdebug") "user" else original
+        write("ENV", "sanitizedBuildType called, returning $sanitized")
+        return sanitized
+    }
+
+    /** Replace SystemProperties.get("ro.debuggable") checks with this. */
+    @JvmStatic
+    fun fakeRoDebuggable(): String {
+        write("ENV", "fakeRoDebuggable called, returning 0")
+        return "0"
     }
 
     /** Universal one-argument logger. */

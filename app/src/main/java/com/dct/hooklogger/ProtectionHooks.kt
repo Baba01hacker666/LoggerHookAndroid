@@ -92,18 +92,23 @@ internal object ProtectionHooks {
             HookRuntime.write("INTEGRITY", "sha256HexFromFile missing file: $path")
             return ""
         }
-        val digest = MessageDigest.getInstance("SHA-256")
-        file.inputStream().use { stream ->
-            val buf = ByteArray(8192)
-            while (true) {
-                val read = stream.read(buf)
-                if (read <= 0) break
-                digest.update(buf, 0, read)
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { stream ->
+                val buf = ByteArray(8192)
+                while (true) {
+                    val read = stream.read(buf)
+                    if (read <= 0) break
+                    digest.update(buf, 0, read)
+                }
             }
+            val hex = digest.digest().joinToString("") { "%02x".format(Locale.US, it) }
+            HookRuntime.write("INTEGRITY", "sha256HexFromFile computed SHA-256 for $path")
+            hex
+        } catch (e: Exception) {
+            HookRuntime.write("INTEGRITY", "sha256HexFromFile failed for $path: ${e.javaClass.simpleName}: ${e.message}")
+            ""
         }
-        val hex = digest.digest().joinToString("") { "%02x".format(Locale.US, it) }
-        HookRuntime.write("INTEGRITY", "sha256HexFromFile computed SHA-256 for $path")
-        return hex
     }
 
     fun sha256ClassesDexFromApk(apkPath: String?): String {

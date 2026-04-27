@@ -29,6 +29,16 @@ object Hook {
     fun fakeIsUserAMonkey(): Boolean = ProtectionHooks.fakeIsUserAMonkey()
 
     @JvmStatic
+    fun fakeDevelopmentSettingsEnabled(): Int = ProtectionHooks.fakeDevelopmentSettingsEnabled()
+
+    @JvmStatic
+    fun fakeAdbEnabled(): Int = ProtectionHooks.fakeAdbEnabled()
+
+    @JvmStatic
+    fun sanitizedGlobalSetting(name: String?, originalValue: Int): Int =
+        ProtectionHooks.sanitizedGlobalSetting(name, originalValue)
+
+    @JvmStatic
     fun sanitizedBuildTags(): String = ProtectionHooks.sanitizedBuildTags()
 
     @JvmStatic

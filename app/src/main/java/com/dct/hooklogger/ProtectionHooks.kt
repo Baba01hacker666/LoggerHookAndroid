@@ -46,6 +46,30 @@ internal object ProtectionHooks {
         return false
     }
 
+    fun fakeDevelopmentSettingsEnabled(): Int {
+        HookRuntime.write("DEBUGGER", "fakeDevelopmentSettingsEnabled called, returning 0")
+        return 0
+    }
+
+    fun fakeAdbEnabled(): Int {
+        HookRuntime.write("DEBUGGER", "fakeAdbEnabled called, returning 0")
+        return 0
+    }
+
+    fun sanitizedGlobalSetting(name: String?, originalValue: Int): Int {
+        val normalizedName = name?.trim()?.lowercase()
+        val sanitized = when (normalizedName) {
+            Settings.Global.DEVELOPMENT_SETTINGS_ENABLED.lowercase(),
+            Settings.Global.ADB_ENABLED.lowercase() -> 0
+            else -> originalValue
+        }
+        HookRuntime.write(
+            "DEBUGGER",
+            "sanitizedGlobalSetting called for ${name ?: "null"} with original=$originalValue, returning $sanitized"
+        )
+        return sanitized
+    }
+
     fun sanitizedBuildTags(): String {
         val original = Build.TAGS ?: "null"
         val sanitized = original.replace("test-keys", "release-keys")

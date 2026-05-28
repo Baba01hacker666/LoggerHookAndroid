@@ -9,6 +9,60 @@ internal object EmulatorBypassHooks {
         return false
     }
 
+    fun sanitizedModel(original: String?): String {
+        val raw = original ?: Build.MODEL ?: ""
+        val l = raw.lowercase(Locale.US)
+        val suspicious = listOf("sdk", "emulator", "google_sdk", "vbox", "test-keys").any { l.contains(it) }
+        val out = if (suspicious) "Pixel 7" else raw
+        HookRuntime.write("EMU_BYPASS", "sanitizedModel input='$raw' output='$out'")
+        return out
+    }
+
+    fun sanitizedManufacturer(original: String?): String {
+        val raw = original ?: Build.MANUFACTURER ?: ""
+        val l = raw.lowercase(Locale.US)
+        val suspicious = listOf("unknown", "genymotion", "netease", "tiantian", "nox", "bignox").any { l.contains(it) }
+        val out = if (suspicious) "Google" else raw
+        HookRuntime.write("EMU_BYPASS", "sanitizedManufacturer input='$raw' output='$out'")
+        return out
+    }
+
+    fun sanitizedBrand(original: String?): String {
+        val raw = original ?: Build.BRAND ?: ""
+        val l = raw.lowercase(Locale.US)
+        val suspicious = listOf("generic", "google", "nox", "bignox", "netease").any { l.contains(it) }
+        val out = if (suspicious) "google" else raw
+        HookRuntime.write("EMU_BYPASS", "sanitizedBrand input='$raw' output='$out'")
+        return out
+    }
+
+    fun sanitizedDevice(original: String?): String {
+        val raw = original ?: Build.DEVICE ?: ""
+        val l = raw.lowercase(Locale.US)
+        val suspicious = listOf("generic", "vbox", "emulator", "nox", "bignox").any { l.contains(it) }
+        val out = if (suspicious) "panther" else raw
+        HookRuntime.write("EMU_BYPASS", "sanitizedDevice input='$raw' output='$out'")
+        return out
+    }
+
+    fun sanitizedProduct(original: String?): String {
+        val raw = original ?: Build.PRODUCT ?: ""
+        val l = raw.lowercase(Locale.US)
+        val suspicious = listOf("sdk", "google_sdk", "emulator", "vbox", "nox", "bignox").any { l.contains(it) }
+        val out = if (suspicious) "panther" else raw
+        HookRuntime.write("EMU_BYPASS", "sanitizedProduct input='$raw' output='$out'")
+        return out
+    }
+
+    fun sanitizedBoard(original: String?): String {
+        val raw = original ?: Build.BOARD ?: ""
+        val l = raw.lowercase(Locale.US)
+        val suspicious = listOf("unknown", "goldfish", "vbox", "nox", "bignox").any { l.contains(it) }
+        val out = if (suspicious) "panther" else raw
+        HookRuntime.write("EMU_BYPASS", "sanitizedBoard input='$raw' output='$out'")
+        return out
+    }
+
     fun sanitizedHardware(original: String?): String {
         val raw = original ?: Build.HARDWARE ?: ""
         val l = raw.lowercase(Locale.US)

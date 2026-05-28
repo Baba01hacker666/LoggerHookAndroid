@@ -126,4 +126,31 @@ object Hook {
 
     @JvmStatic
     fun clear() = LoggingHooks.clear()
+
+    @JvmStatic
+    fun fakeVpnConnected(): Boolean = ProtectionHooks.fakeVpnConnected()
+
+    @JvmStatic
+    fun fakeNetworkCapabilitiesHasTransport(transportType: Int): Boolean = ProtectionHooks.fakeNetworkCapabilitiesHasTransport(transportType)
+
+    @JvmStatic
+    fun sanitizedPackageName(original: String?): String = RootBypassHooks.sanitizedPackageName(original)
+
+    @JvmStatic
+    fun sanitizedModel(original: String?): String = EmulatorBypassHooks.sanitizedModel(original)
+
+    @JvmStatic
+    fun sanitizedManufacturer(original: String?): String = EmulatorBypassHooks.sanitizedManufacturer(original)
+
+    @JvmStatic
+    fun sanitizedBrand(original: String?): String = EmulatorBypassHooks.sanitizedBrand(original)
+
+    @JvmStatic
+    fun sanitizedDevice(original: String?): String = EmulatorBypassHooks.sanitizedDevice(original)
+
+    @JvmStatic
+    fun sanitizedProduct(original: String?): String = EmulatorBypassHooks.sanitizedProduct(original)
+
+    @JvmStatic
+    fun sanitizedBoard(original: String?): String = EmulatorBypassHooks.sanitizedBoard(original)
 }

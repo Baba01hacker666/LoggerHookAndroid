@@ -130,6 +130,28 @@ This logger includes methods to help evade anti-tampering and runtime protection
    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedBatteryLevel(I)I
    ```
 
+
+8. **Bypass Device Information Checks:**
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedModel(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedManufacturer(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedBrand(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedDevice(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedProduct(Ljava/lang/String;)Ljava/lang/String;
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedBoard(Ljava/lang/String;)Ljava/lang/String;
+   ```
+
+9. **Spoof Root App Package Checks:**
+   ```smali
+   invoke-static {v0}, Lcom/dct/hooklogger/Hook;->sanitizedPackageName(Ljava/lang/String;)Ljava/lang/String;
+   ```
+
+10. **Bypass VPN Checks:**
+    ```smali
+    invoke-static {}, Lcom/dct/hooklogger/Hook;->fakeVpnConnected()Z
+    invoke-static {v0}, Lcom/dct/hooklogger/Hook;->fakeNetworkCapabilitiesHasTransport(I)Z
+    ```
+
 ## Log location
 
 Default log path after `Hook.init(context)`:

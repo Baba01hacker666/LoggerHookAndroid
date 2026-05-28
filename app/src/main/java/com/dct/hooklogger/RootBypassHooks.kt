@@ -55,7 +55,16 @@ internal object RootBypassHooks {
             "/system/app/superuser.apk",
             "/system/etc/init/magisk",
             "/proc/mounts",
-            "magisk"
+            "magisk",
+            "/data/local/su",
+            "/data/local/bin/su",
+            "/data/local/xbin/su",
+            "/system/sd/xbin/su",
+            "/system/bin/failsafe/su",
+            "/data/adb/magisk",
+            "/system/app/Superuser.apk",
+            "/cache/su",
+            "/system/xbin/daemonsu"
         )
         val forceFalse = rootArtifacts.any { lowered.contains(it) }
         if (forceFalse) {
@@ -95,6 +104,13 @@ internal object RootBypassHooks {
             "ro.debuggable" -> "0"
             "service.adb.root" -> "0"
             "ro.boot.verifiedbootstate" -> "green"
+            "ro.build.type" -> "user"
+            "ro.kernel.qemu" -> "0"
+            "ro.hardware" -> "qcom"
+            "ro.product.device" -> "panther"
+            "ro.product.model" -> "Pixel 7"
+            "ro.product.name" -> "panther"
+            "ro.build.selinux" -> "1"
             else -> null
         }
         val out = fake ?: (originalValue ?: "")
@@ -109,5 +125,14 @@ internal object RootBypassHooks {
             HookRuntime.write("ROOT_BYPASS", "sanitizeRootBeerCheck '${checkName ?: "unknown"}' passthrough false")
         }
         return false
+    }
+
+    fun sanitizedPackageName(original: String?): String {
+        val raw = original ?: ""
+        val l = raw.lowercase(Locale.US)
+        val suspicious = listOf("magisk", "superuser", "supersu", "topjohnwu", "chainfire").any { l.contains(it) }
+        val out = if (suspicious) "com.android.settings" else raw
+        HookRuntime.write("ROOT_BYPASS", "sanitizedPackageName input='$raw' output='$out'")
+        return out
     }
 }

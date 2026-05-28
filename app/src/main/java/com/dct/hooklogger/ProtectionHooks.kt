@@ -89,4 +89,19 @@ internal object ProtectionHooks {
         HookRuntime.write("ENV", "fakeGetInstallerPackageName called for ${packageName ?: "null"}, returning $installer")
         return installer
     }
+
+    fun fakeVpnConnected(): Boolean {
+        HookRuntime.write("VPN_BYPASS", "fakeVpnConnected called, returning false")
+        return false
+    }
+
+    fun fakeNetworkCapabilitiesHasTransport(transportType: Int): Boolean {
+        // NetworkCapabilities.TRANSPORT_VPN is 4
+        if (transportType == 4) {
+            HookRuntime.write("VPN_BYPASS", "fakeNetworkCapabilitiesHasTransport intercepted TRANSPORT_VPN(4), returning false")
+            return false
+        }
+        HookRuntime.write("VPN_BYPASS", "fakeNetworkCapabilitiesHasTransport passthrough transportType=$transportType")
+        return true // Assume other transports are available for simplicity, or ideally let original run if possible
+    }
 }
